@@ -1,0 +1,15 @@
+{
+    "$schema": "https://schema.management.azure.com/schemas/2019-04-01/deploymentParameters.json#",
+    "contentVersion": "1.0.0.0",
+    "parameters": {
+        "planName": {
+            "value": "phpipam-plan-dev"
+        },
+        "appName": {
+            "value": "phpipam-www-dev"
+        },
+        "dockerImage": {
+            "value": "DOCKER|phpipam/phpipam-www"
+        }
+    }
+}

@@ -1,0 +1,223 @@
+{
+    "$schema": "https://schema.management.azure.com/schemas/2019-04-01/deploymentTemplate.json#",
+    "contentVersion": "1.0.0.0",
+    "parameters": {
+        "location": {
+            "type": "string",
+            "metadata": {
+                "description": "description"
+            },
+            "defaultValue": "[resourceGroup().location]"
+        },
+        "dbServerName": {
+            "type": "string",
+            "metadata": {
+                "description": "description"
+            }
+        },
+        "dbAdministratorLogin": {
+            "type": "string",
+            "metadata": {
+                "description": "description"
+            }
+        },
+        "dbAdministratorLoginPassword": {
+            "type": "securestring",
+            "metadata": {
+                "description": "Database administrator password"
+            }
+        },
+        "dbSkuName": {
+            "type": "string",
+            "defaultValue": "Standard_B1s",
+            "metadata": {
+                "description": "Azure database for MySQL SKU name"
+            }
+        },
+        "dbSkuTier": {
+            "type": "string",
+            "metadata": {
+                "description": "description"
+            },
+            "defaultValue": "Burstable",
+            "allowedValues": [
+                "GeneralPurpose",
+                "MemoryOptimized",
+                "Burstable"
+            ]
+        },
+        "dbStorageSizeGB": {
+            "type": "int",
+            "metadata": {
+                "description": "Database size in GB"
+            },
+            "defaultValue": 20
+        },
+        "dbIops": {
+            "type": "int",
+            "metadata": {
+                "description": "Database IOPS"
+            },
+            "defaultValue": 360
+        },
+        "dbVersion": {
+            "type": "string",
+            "metadata": {
+                "description": "description"
+            },
+            "allowedValues": [
+                "5.7",
+                "8.0.21"
+            ],
+            "defaultValue": "8.0.21"
+        },
+        "dbBackupRetentionDays": {
+            "type": "int",
+            "metadata": {
+                "description": "description"
+            },
+            "defaultValue": 7
+        },
+        "dbGeoRedundantBackup": {
+            "type": "string",
+            "metadata": {
+                "description": "description"
+            },
+            "allowedValues": [
+                "Enabled",
+                "Diabled"
+            ],
+            "defaultValue": "Enabled"
+        },
+        "dbName": {
+            "type": "string",
+            "metadata": {
+                "description": "description"
+            },
+            "defaultValue": "phpipam"
+        },
+        "planName": {
+            "type": "string",
+            "metadata": {
+                "description": "Name off app service plan"
+            }
+        },
+        "appName": {
+            "type": "string",
+            "metadata": {
+                "description": "Name of web app"
+            }
+        },
+        "dockerImage": {
+            "type": "string",
+            "metadata": {
+                "description": "Docker image in format: DOCKER|phpipam/phpipam-www"
+            }
+        }
+    },
+    "functions": [],
+    "variables": {},
+    "resources": [
+        {
+            "type": "Microsoft.DBForMySql/flexibleServers",
+            "apiVersion": "2021-05-01",
+            "location": "[parameters('location')]",
+            "name": "[parameters('dbServerName')]",
+            "sku": {
+                "name": "[parameters('dbSkuName')]",
+                "tier": "[parameters('dbSkuTier')]"
+            },
+            "properties": {
+                "administratorLogin": "[parameters('dbAdministratorLogin')]",
+                "administratorLoginPassword": "[parameters('dbAdministratorLoginPassword')]",
+                "storage": {
+                    "autoGrow": "Enabled",
+                    "iops": "[parameters('dbIops')]",
+                    "storageSizeGB": "[parameters('dbStorageSizeGB')]"
+                },
+                "createMode": "Default",
+                "version": "[parameters('dbVersion')]",
+                "backup": {
+                    "backupRetentionDays": "[parameters('dbBackupRetentionDays')]",
+                    "geoRedundantBackup": "[parameters('dbGeoRedundantBackup')]"
+                },
+                "highAvailability": {
+                    "mode": "Disabled"
+                }
+            }
+        },
+        {
+            "type": "Microsoft.DBForMySql/flexibleServers/databases",
+            "apiVersion": "2021-12-01-preview",
+            "location":"[parameters('location')]",
+            "name": "[concat(parameters('dbServerName'), '/', parameters('dbName'))]",
+            "dependsOn": [
+                "[resourceId('Microsoft.DBForMySql/flexibleServers', parameters('dbServerName'))]"
+            ],
+            "properties": {
+                "charset": "utf8",
+                "collation": "utf8_general_ci"
+            }
+        },
+        {
+            "type": "Microsoft.Web/serverfarms",
+            "apiVersion": "2022-03-01",
+            "location": "[resourceGroup().location]",
+            "name": "[parameters('planName')]",
+            "dependsOn": [
+                "[resourceId('Microsoft.DBForMySql/flexibleServers', parameters('dbServerName'))]"
+            ],
+            "sku": {
+                "name": "B1"
+            },
+            "kind": "linux",
+            "properties": {
+                "reserved": true,
+                "name": "[parameters('planName')]"
+            }
+        },
+        {
+            "type": "Microsoft.Web/sites",
+            "apiVersion": "2022-03-01",
+            "location": "[resourceGroup().location]",
+            "dependsOn": [
+                "[resourceId('Microsoft.Web/serverfarms', parameters('planName'))]",
+                "[resourceId('Microsoft.DBForMySql/flexibleServers', parameters('dbServerName'))]"
+            ],
+            "name": "[parameters('appName')]",
+            "kind": "app,linux,container",
+            "properties": {
+                "enabled": true,
+                "serverFarmId": "[resourceId('Microsoft.Web/serverfarms', parameters('planName'))]",
+                "reserved": true,
+                "siteConfig": {
+                    "linuxFxVersion": "DOCKER|phpipam/phpipam-www"
+                },
+                "httpsOnly": true,
+                "publicNetworkAccess": "Enabled"
+            },
+            "resources": [
+                {
+                    "type": "config",
+                    "apiVersion": "2022-03-01",
+                    "kind": "string",
+                    "name": "appsettings",
+                    "dependsOn": [
+                        "[resourceId('Microsoft.Web/sites', parameters('appName'))]"
+                    ],
+                    "tags": {
+                        "displayName": "WebAppSettings"
+                    },
+                    "properties": {
+                        "IPAM_DATABASE_HOST": "[concat(parameters('dbServerName'), '.mysql.database.azure.com')]",
+                        "IPAM_DATABASE_USER": "[parameters('dbAdministratorLogin')]",
+                        "IPAM_DATABASE_PASS": "[parameters('dbAdministratorLoginPassword')]",
+                        "IPAM_DATABASE_NAME": "[parameters('dbName')]",
+                        "TZ": "Europe/Copenhagen"
+                    }
+                }
+            ]
+        }
+    ],
+    "outputs": {}
+}

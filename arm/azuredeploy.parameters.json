@@ -1,0 +1,48 @@
+{
+    "$schema": "https://schema.management.azure.com/schemas/2019-04-01/deploymentParameters.json#",
+    "contentVersion": "1.0.0.0",
+    "parameters": {
+        "location": {
+            "value": "westeurope" 
+        },
+        "dbServerName": {
+            "value": "mysql-app2"
+        },
+        "dbAdministratorLogin": {
+            "value": "jesper" 
+        },
+        "dbAdministratorLoginPassword": {
+            "value": "Passw0rd!123" 
+        },
+        "dbSkuName": {
+            "value": "Standard_B1s"
+        },
+        "dbSkuTier": {
+            "value": "Burstable"
+        },
+        "dbStorageSizeGB": {
+            "value": 20
+        },
+        "dbIops": {
+            "value": 360
+        },
+        "dbVersion": {
+            "value": "8.0.21"
+        },
+        "dbBackupRetentionDays": {
+            "value": 7
+        },
+        "dbGeoRedundantBackup": {
+            "value": "Enabled"
+        },
+        "planName": {
+            "value": "asp-app2"
+        },
+        "appName": {
+            "value": "app-app2"
+        },
+        "dockerImage": {
+            "value": "" 
+        }
+    }
+}
