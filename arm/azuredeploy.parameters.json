@@ -6,7 +6,7 @@
             "value": "westeurope" 
         },
         "dbServerName": {
-            "value": "mysql-app2"
+            "value": "mysql-phpipam2"
         },
         "dbAdministratorLogin": {
             "value": "jesper" 
@@ -35,11 +35,14 @@
         "dbGeoRedundantBackup": {
             "value": "Enabled"
         },
+        "dbName": {
+            "value": "phpipam"
+        },
         "planName": {
-            "value": "asp-app2"
+            "value": "asp-phpipam2"
         },
         "appName": {
-            "value": "app-app2"
+            "value": "app-phpipam2"
         },
         "dockerImage": {
             "value": "" 

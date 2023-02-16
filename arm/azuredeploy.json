@@ -5,20 +5,20 @@
         "location": {
             "type": "string",
             "metadata": {
-                "description": "description"
+                "description": "Region to deploy to"
             },
             "defaultValue": "[resourceGroup().location]"
         },
         "dbServerName": {
             "type": "string",
             "metadata": {
-                "description": "description"
+                "description": "Name og MySQL server"
             }
         },
         "dbAdministratorLogin": {
             "type": "string",
             "metadata": {
-                "description": "description"
+                "description": "Database administrator username"
             }
         },
         "dbAdministratorLoginPassword": {
@@ -37,7 +37,7 @@
         "dbSkuTier": {
             "type": "string",
             "metadata": {
-                "description": "description"
+                "description": "Database SKU tier"
             },
             "defaultValue": "Burstable",
             "allowedValues": [
@@ -63,7 +63,7 @@
         "dbVersion": {
             "type": "string",
             "metadata": {
-                "description": "description"
+                "description": "MySQL version"
             },
             "allowedValues": [
                 "5.7",
@@ -74,14 +74,14 @@
         "dbBackupRetentionDays": {
             "type": "int",
             "metadata": {
-                "description": "description"
+                "description": "Database backup retention in days"
             },
             "defaultValue": 7
         },
         "dbGeoRedundantBackup": {
             "type": "string",
             "metadata": {
-                "description": "description"
+                "description": "Database geo redundancy"
             },
             "allowedValues": [
                 "Enabled",
@@ -92,7 +92,7 @@
         "dbName": {
             "type": "string",
             "metadata": {
-                "description": "description"
+                "description": "Database name"
             },
             "defaultValue": "phpipam"
         },
@@ -147,6 +147,19 @@
             }
         },
         {
+            "type": "Microsoft.DBForMySql/flexibleServers/firewallRules",
+            "apiVersion": "2021-12-01-preview",
+            "location": "[parameters('location')]",
+            "name": "[concat(parameters('dbServerName'), '/AllowAllAzureServicesAndResourcesWithinAzureIps')]",
+            "dependsOn": [
+                "[resourceId('Microsoft.DBForMySql/flexibleServers', parameters('dbServerName'))]"
+            ],
+            "properties": {
+                "startIpAddress": "0.0.0.0",
+                "endIpAddress": "0.0.0.0"
+            }
+        },
+        {
             "type": "Microsoft.DBForMySql/flexibleServers/databases",
             "apiVersion": "2021-12-01-preview",
             "location":"[parameters('location')]",
@@ -182,7 +195,8 @@
             "location": "[resourceGroup().location]",
             "dependsOn": [
                 "[resourceId('Microsoft.Web/serverfarms', parameters('planName'))]",
-                "[resourceId('Microsoft.DBForMySql/flexibleServers', parameters('dbServerName'))]"
+                "[resourceId('Microsoft.DBForMySql/flexibleServers', parameters('dbServerName'))]",
+                "[resourceId('Microsoft.DBForMySql/flexibleServers/firewallRules', parameters('dbServerName'), 'AllowAllAzureServicesAndResourcesWithinAzureIps')]"
             ],
             "name": "[parameters('appName')]",
             "kind": "app,linux,container",
